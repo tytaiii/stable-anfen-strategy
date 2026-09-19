@@ -1,6 +1,6 @@
 # Stable-Anfen Strategy
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![CI](https://github.com/tytaiii/stable-anfen-strategy/actions/workflows/ci.yml/badge.svg)
 
 **A conservative crypto quant strategy** — BTC + BNB dual-gun 1x no-leverage momentum rotation. Designed around one goal: *low drawdown, sleep well at night*. ML safety-score gating + dual-gun equity blending + 70/30 momentum rotation, all at a constant 1x leverage.
 
@@ -54,28 +54,42 @@
 ├── 📄 stable_anfen_strategy.py   # core strategy (ML training, dual-gun, rotation)
 ├── 📄 backtest.py                # backtest entry point (equity chart + stats)
 ├── 📄 fetch_data.py              # data fetcher (Binance klines + Deribit DVOL)
+├── 📄 pyproject.toml             # Python package metadata
+├── 📁 tests/                     # pytest suite (features, trading loop, rotation)
+├── 📁 .github/                   # CI workflow, issue/PR templates
 ├── 📁 data/                      # sample data (2021-01 → 2026-09, 4h)
 │   ├── btcusdt_4h.csv
 │   ├── bnbusdt_4h.csv
 │   ├── deribit_dvol_btc_4h.csv
 │   ├── btc_80D_wfa.csv           # 80-day walk-forward dynamic threshold
 │   └── bnb_80D_wfa.csv
+├── 📄 SECURITY.md / CONTRIBUTING.md / CODE_OF_CONDUCT.md / CHANGELOG.md
 └── 📁 docs/
     └── backtest_2026_sample.png  # sample backtest chart
 ```
 
 ---
 
-## Quick Start
+## Installation
+
+Requires Python 3.10+.
 
 ```bash
-# 1. Install dependencies (Python 3.10+)
+git clone https://github.com/tytaiii/stable-anfen-strategy.git
+cd stable-anfen-strategy
 pip install -r requirements.txt
+```
 
-# 2. (Optional) refresh data — skip if the bundled data/ snapshot is enough
+No API keys are required: `data/` ships with a bundled snapshot through
+2026-09, and `fetch_data.py` uses only public endpoints.
+
+## Usage
+
+```bash
+# (Optional) refresh data — skip if the bundled data/ snapshot is enough
 python fetch_data.py
 
-# 3. Run the backtest (default window 2026-03-01 → today; outputs chart + stats)
+# Run the backtest (default window 2026-03-01 → today; outputs chart + stats)
 python backtest.py
 
 # Custom window
@@ -84,6 +98,21 @@ python backtest.py --start 2025-01-01 --end 2025-12-31
 # Compare against buy & hold
 python backtest.py --start 2026-03-01 --vs-hold
 ```
+
+The backtest writes a PNG chart and prints per-series stats (return, CAGR,
+max drawdown, Sharpe, trade count, win rate).
+
+## Testing
+
+```bash
+pip install pytest
+pytest -v
+```
+
+The suite covers feature engineering, the trading loop, the scout gun, the
+momentum rotation engine, and statistics — all on small synthetic datasets,
+so the full run takes about a second. CI runs it on every push and pull
+request (Python 3.11 and 3.12).
 
 ---
 

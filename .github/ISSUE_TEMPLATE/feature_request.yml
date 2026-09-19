@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest an enhancement for the strategy or tooling
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome! Please describe the motivation first, then the proposal.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem this solves
+      description: What gap or limitation are you hitting today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like it to work? Include any references or prior art.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

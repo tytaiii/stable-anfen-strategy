@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a problem with the strategy, backtest, or data fetcher
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please provide as much detail as possible.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands run, arguments used, data state
+      placeholder: |
+        1. Run `python backtest.py --start ...`
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, and dependency versions
+      placeholder: |
+        - OS: macOS / Ubuntu
+        - Python: 3.12
+        - pandas / numpy / scikit-learn versions (`pip freeze | grep -E "pandas|numpy|scikit")
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      render: shell
