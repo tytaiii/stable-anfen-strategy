@@ -1,4 +1,4 @@
-# Stable-Anfen Strategy
+# (💰 v 💰) Stable-Anfen Strategy
 
 **Manage drawdowns. Follow trends.**
 
