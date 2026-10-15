@@ -1,77 +1,77 @@
-# 策略原理与回测口径
+# Strategy & Backtest Methodology
 
-[返回首页](../README.md)
+[Back to README](../README.md)
 
-稳定安分在 BTC 与 BNB 上分别运行主策略和趋势策略，再按两套单币策略的净值动量分配组合权重。默认回测路径中的两个交易模块均为 1 倍敞口，只做多或空仓。
+Stable-Anfen runs a main strategy and an independent trend module for each of BTC and BNB, then allocates portfolio weights using the momentum of the two strategies' equity curves. In the default backtest, both trading modules use 1x exposure and are either long or flat.
 
-## 1. 数据与特征
+## 1. Data & Features
 
-- **价格**：Binance BTCUSDT、BNBUSDT 的 4 小时现货 K 线。
-- **波动率**：Deribit BTC DVOL 隐含波动率指数，两币共用。
-- **模型特征**：DVOL 的 60 根 K 线滚动标准分数 `z`，及其一阶差分 `dz`。
-- **拐点信号**：`dz` 从负值转为正值，记为 `trigger`。
+- **Prices:** Binance BTCUSDT and BNBUSDT spot candles at 4-hour intervals.
+- **Volatility:** Deribit's BTC DVOL implied volatility index, shared by both assets.
+- **Model features:** The 60-bar rolling Z-score of DVOL, `z`, and its first difference, `dz`.
+- **Turning point:** A crossing of `dz` from negative to positive produces a `trigger`.
 
-## 2. 机器学习评分
+## 2. Machine Learning Score
 
-分别训练 1、3、5、7、14、30 天六个预测周期的逻辑回归模型，估计相应周期内价格上涨的概率，取六个概率的中位数作为 `safety_score`。该分数是交易信号，不是资金安全保证。
+Six logistic regression models estimate the probability of a price increase over 1, 3, 5, 7, 14, and 30 days. The median of these probabilities becomes `safety_score`, a trading signal rather than a guarantee of capital safety.
 
-模型自 2022-06 起按扩展窗口训练，每 42 根 K 线（7 天）重新训练一次。各周期训练集预留对应的标签观察期；样本权重采用 540 天半衰期的时间衰减，绝对远期收益位于前 5% 的样本权重重置为 1。
+Models use an expanding training window from June 2022 onward and retrain every 42 bars (7 days). Each horizon leaves room for its forward labels to become observable. Sample weights decay with a 540-day half-life; observations in the top 5% of absolute forward returns have their weights reset to 1.
 
-主策略的评分门槛读取 `data/{coin}_80D_wfa.csv` 中预计算的阈值；文件缺失时回退到固定值，默认 `0.52`。`--threshold` 仅控制这一回退值，不会覆盖已有的 WFA 文件。
+The main strategy reads precomputed thresholds from `data/{coin}_80D_wfa.csv`. If the file is missing, it falls back to a fixed threshold, `0.52` by default. `--threshold` controls only this fallback and does not override an existing WFA file.
 
-## 3. 主策略：波动率拐点择时
+## 3. Main Strategy: Volatility Turning Points
 
-- **入场**：评分达到门槛，出现拐点信号，当根价格收益为正，且短周期评分达到要求。
-- **短周期确认**：取 1、3、5 天上涨概率的均值；BTC 门槛为 `0.54`，BNB 为 `0.50`。
-- **等待队列**：触发信号后，若短周期评分不足，最多等待 12 根 K 线（48 小时）。
-- **退出**：评分低于门槛，或出现拐点信号且当根价格收益为负。
+- **Entry:** The score passes its threshold, a turning point occurs, the current bar's price return is positive, and the short-horizon score meets its requirement.
+- **Short-horizon confirmation:** The mean of the 1-, 3-, and 5-day probabilities must reach `0.54` for BTC or `0.50` for BNB.
+- **Waiting queue:** A triggered entry with an insufficient short-horizon score can wait up to 12 bars (48 hours) for confirmation.
+- **Exit:** The score falls below its threshold, or a turning point occurs with a negative price return on the current bar.
 
-常规入场、退出按信号产生后的下一根 K 线开盘价模拟成交；回测末尾仍持有的仓位按最后收盘价结算。默认路径不启用杠杆放大、波动率限仓、回撤熔断或冷却机制。
+Regular entries and exits are simulated at the next bar's open. Positions still open at the end of the backtest are settled at the final close. The default path does not enable leverage amplification, volatility-based exposure limits, drawdown circuit breakers, or cooldowns.
 
-## 4. 趋势策略与动态混合
+## 4. Trend Module & Dynamic Blending
 
-趋势模块独立运行：20 根 K 线动量为正、收盘价突破此前 20 根最高价时入场；收盘价跌破此前 10 根最低价时退出。该模块不受主策略评分门槛控制，同样使用 1 倍敞口。
+The trend module operates independently. It enters when 20-bar momentum is positive and the close breaks above the previous 20 bars' highest high; it exits when the close falls below the previous 10 bars' lowest low. This module is not subject to the main strategy's score gate and also uses 1x exposure.
 
-两模块按每根 K 线的收益率加权混合。趋势模块的权重为：
+The two modules' returns are blended each bar. The trend module's weight is:
 
 ```text
-w_trend = 0.40 / (1 + exp(-0.3 × Z_MA200))
+w_trend = 0.40 / (1 + exp(-0.3 * Z_MA200))
 w_main  = 1 - w_trend
 ```
 
-`Z_MA200` 是当前收盘价相对前一根时点的 200 日均价的百分比偏离。趋势模块最多占 40%，主策略至少占 60%。
+`Z_MA200` is the current close's percentage deviation from the 200-day moving average computed through the previous bar. The trend module receives at most 40%; the main strategy receives at least 60%.
 
-## 5. BTC / BNB 轮动
+## 5. BTC / BNB Rotation
 
-分别计算 BTC、BNB **策略净值**近 120 根 K 线（20 天）的涨幅，排名第一分配 70%，第二分配 30%；权重延后一根 K 线应用。排名依据是策略净值表现，不是币价涨幅。
+Rank the BTC and BNB **strategy equity curves** by their returns over the past 120 bars (20 days). The stronger strategy receives 70% and the other 30%, with weights applied one bar later. Rankings use strategy performance, not asset price returns.
 
-轮动在收益序列层面合成组合净值，当前实现未额外扣除权重调整的再平衡成本。
+Portfolio equity is synthesized from weighted return series. The current implementation does not deduct additional costs for portfolio rebalancing.
 
-## 6. 数据更新与复现
+## 6. Data Updates & Reproduction
 
-仓库随附的行情与 DVOL 数据截至 **2026-09-18 16:00**（CSV 时间戳）。首页指标和图表对应从 2026-03-01 开始、截至该时点的样本，已使用仓库代码重新运行核对。
+The bundled price and DVOL data end at **2026-09-18 16:00** (CSV timestamp). The README's statistics and chart cover March 1, 2026 through that timestamp and were verified by rerunning the repository's code.
 
 ```bash
 python backtest.py --start 2026-03-01 --end 2026-09-18T16:00 --vs-hold
 ```
 
-`fetch_data.py` 使用 Binance 和 Deribit 公共接口更新价格与 DVOL，无需 API Key。脚本将较粗的历史 DVOL 与较细的近期数据合并，重采样并向前填充至 4 小时；部分历史值因此是近似值。
+`fetch_data.py` updates prices and DVOL through Binance and Deribit public endpoints without an API key. It combines coarser historical DVOL with finer recent data, resamples to 4 hours, and forward-fills gaps. Some historical values are therefore approximations.
 
-**更新脚本不重新生成 WFA 阈值。** 随附阈值表中，BTC 最后日期为 2026-05-21，BNB 为 2026-04-28；超出覆盖范围后沿用最后一个阈值。阈值生成流程未包含在本仓库中。
+**The update script does not regenerate WFA thresholds.** The bundled threshold tables end on May 21, 2026 for BTC and April 28, 2026 for BNB. Later bars reuse the last available threshold. The threshold-generation pipeline is not included in this repository.
 
-## 7. 统计与边界
+## 7. Statistics & Limitations
 
-- 交易模块按单边 `0.07%` 计费；未模拟资金费、额外滑点、流动性冲击与组合再平衡成本。
-- 最大回撤来自组合净值序列；夏普比率按日收益计算，以 `√365` 年化，未扣无风险利率。
-- 展示的交易次数和胜率来自各模块的交易记录，不等同于组合账户实际执行的订单统计。
-- 动态混合使用当根收盘信息为当根模块收益加权；完整的时序与可执行性审计尚未包含在此回测中。
-- 示例仅覆盖指定区间和 BTC、BNB。数据近似、预计算阈值和成交假设均会影响结果，历史表现不代表未来收益。
+- Trading modules include a fee of `0.07%` per side. Funding, additional slippage, liquidity impact, and portfolio rebalancing costs are not modeled.
+- Maximum drawdown is measured from portfolio equity. The Sharpe ratio uses daily returns, annualized by the square root of 365, without subtracting a risk-free rate.
+- Trade counts and win rates aggregate the modules' trade records; they do not represent actual orders placed by a portfolio account.
+- Dynamic blending uses the current bar's closing information to weight that same bar's module returns. A full audit of timing and live execution feasibility is outside the scope of this backtest.
+- The sample covers only the stated period and BTC/BNB. Data approximations, precomputed thresholds, and execution assumptions affect results. Past performance does not guarantee future returns.
 
-## 测试
+## Tests
 
 ```bash
 pip install pytest
 pytest -v
 ```
 
-测试覆盖特征计算、交易循环、趋势模块、轮动与统计；详情见[贡献指南](../CONTRIBUTING.md)。
+Tests cover feature calculations, the trading loop, the trend module, rotation, and statistics. See the [contributing guide](../CONTRIBUTING.md) for details.

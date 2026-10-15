@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Rewrote the README in concise Chinese, highlighting the strategy's purpose,
+- Rewrote the README in concise English, highlighting the strategy's purpose,
   sample drawdown comparison, and a reproducible quick start.
 - Moved implementation details and backtest assumptions to `docs/strategy.md`,
   clarifying strategy-equity rotation, the independent trend module, and data coverage.
