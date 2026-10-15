@@ -12,9 +12,13 @@ An unleveraged BTC/BNB strategy focused on drawdown control. It combines machine
 - **Favor the stronger strategy.** Compare the BTC and BNB strategies' equity performance over the past 20 days; allocate 70% to the stronger side and 30% to the other.
 - **Stay unleveraged.** Both trading modules use 1x exposure. Total portfolio weights never exceed 100% in the default configuration.
 
-## Sample Backtest
+## Out-of-Sample Live Validation
 
-March 1 to September 18, 2026, using the bundled data.
+**2026-03-01 to 2026-09-18 — forward out-of-sample live validation (author-reported).**
+
+Strategy rules were fixed before this period began. Scheduled updates used only historical information available at the time, with each subsequent decision evaluated on unseen market data.
+
+The table and chart are a **backtest reproduction of the same period**, using the bundled data, rather than audited live-account returns.
 
 | Metric | Stable-Anfen | BTC Buy & Hold | BNB Buy & Hold |
 | :--- | ---: | ---: | ---: |
@@ -22,7 +26,7 @@ March 1 to September 18, 2026, using the bundled data.
 | Maximum drawdown | **-6.97%** | -29.25% | -26.67% |
 | Sharpe ratio | **1.81** | 1.13 | 1.14 |
 
-Over this sample, portfolio drawdown was about one quarter of either buy-and-hold benchmark.
+In this reproduction, portfolio drawdown was about one quarter of either buy-and-hold benchmark.
 
 ![Stable-Anfen portfolio versus BTC and BNB buy and hold](./docs/backtest_2026_sample.png)
 
@@ -37,7 +41,7 @@ git clone https://github.com/tytaiii/stable-anfen-strategy.git
 cd stable-anfen-strategy
 pip install -r requirements.txt
 
-# Reproduce the sample and compare against buy and hold
+# Reproduce the validation period in backtest and compare against buy and hold
 python backtest.py --start 2026-03-01 --end 2026-09-18T16:00 --vs-hold
 ```
 

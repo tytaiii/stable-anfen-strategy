@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Highlighted the author's reported March 1 to September 18, 2026 out-of-sample
+  live validation period, clarified the walk-forward protocol, and distinguished
+  reproduced backtest figures from live-account returns.
 - Rewrote the README in concise English, highlighting the strategy's purpose,
   sample drawdown comparison, and a reproducible quick start.
 - Moved implementation details and backtest assumptions to `docs/strategy.md`,

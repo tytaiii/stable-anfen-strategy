@@ -47,7 +47,19 @@ Rank the BTC and BNB **strategy equity curves** by their returns over the past 1
 
 Portfolio equity is synthesized from weighted return series. The current implementation does not deduct additional costs for portfolio rebalancing.
 
-## 6. Data Updates & Reproduction
+## 6. Out-of-Sample Live Validation
+
+**Validation period: March 1 to September 18, 2026.** The author reports that the strategy was validated in live trading during this period under the following protocol:
+
+- Strategy rules were fixed before the validation period began.
+- Scheduled model and threshold updates used only historical information available at each decision point.
+- Subsequent market outcomes provided the forward, out-of-sample evaluation of those decisions.
+
+This is a walk-forward protocol: earlier observations from the validation period can enter later training windows once they become known. It does not mean that the entire period was permanently excluded from all subsequent training.
+
+The README's table and chart are a backtest reproduction of this window, not a live-account statement. The repository does not include the live fills or account equity records needed to independently reconcile realized returns. The backtest assumptions and timing limitations below still apply to the reproduced figures.
+
+## 7. Data Updates & Reproduction
 
 The bundled price and DVOL data end at **2026-09-18 16:00** (CSV timestamp). The README's statistics and chart cover March 1, 2026 through that timestamp and were verified by rerunning the repository's code.
 
@@ -59,7 +71,7 @@ python backtest.py --start 2026-03-01 --end 2026-09-18T16:00 --vs-hold
 
 **The update script does not regenerate WFA thresholds.** The bundled threshold tables end on May 21, 2026 for BTC and April 28, 2026 for BNB. Later bars reuse the last available threshold. The threshold-generation pipeline is not included in this repository.
 
-## 7. Statistics & Limitations
+## 8. Statistics & Limitations
 
 - Trading modules include a fee of `0.07%` per side. Funding, additional slippage, liquidity impact, and portfolio rebalancing costs are not modeled.
 - Maximum drawdown is measured from portfolio equity. The Sharpe ratio uses daily returns, annualized by the square root of 365, without subtracting a risk-free rate.
