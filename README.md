@@ -1,187 +1,61 @@
-# Stable-Anfen Strategy
+# 稳定安分策略 · Stable-Anfen
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![CI](https://github.com/tytaiii/stable-anfen-strategy/actions/workflows/ci.yml/badge.svg)
+**控制回撤，耐心参与趋势。**
 
-**A conservative crypto quant strategy** — BTC + BNB dual-gun 1x no-leverage momentum rotation. Designed around one goal: *low drawdown, sleep well at night*. ML safety-score gating + dual-gun equity blending + 70/30 momentum rotation, all at a constant 1x leverage.
+面向 BTC 与 BNB 的无杠杆量化策略，以控制回撤为优先。结合机器学习择时、趋势跟随与 70/30 动量轮动，在 4 小时周期上按规则交易。
 
----
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue) [![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE) ![CI](https://github.com/tytaiii/stable-anfen-strategy/actions/workflows/ci.yml/badge.svg)
 
-## ⚠️ Disclaimer (read first)
+## 策略如何运作
 
-- This project is **for education and research only** and does not constitute investment advice.
-- **A good backtest never guarantees live profits.** Backtests exclude funding fees, slippage variance and liquidity impact; live performance is usually worse than backtest.
-- Crypto is extremely volatile and past performance does not indicate future results. **Trade at your own risk.**
-- The author assumes no liability for any loss caused by using this code (see [MIT License](./LICENSE)).
+- **有条件地参与市场**：主策略用机器学习评分筛选入场条件，评分不足时退出；独立的趋势策略捕捉突破机会。
+- **把权重交给表现更强的一侧**：比较 BTC、BNB 两套策略近 20 天的净值表现，以 70/30 分配组合权重。
+- **保持 1 倍敞口**：两套交易模块均不使用杠杆放大仓位，组合权重合计不超过 100%。
 
----
+## 示例回测
 
-## Strategy at a Glance
+统计区间：2026-03-01 至 2026-09-18，使用仓库随附数据。
 
-| Dimension | Design |
-|-----------|--------|
-| Assets | BTC, BNB (USDT perpetual or spot, constant 1x) |
-| Timeframe | 4-hour candles |
-| Core | ML safety-score gate (6-horizon Logistic Regression rolling training) |
-| Architecture | Dual-gun equity blending (main gun + scout gun, Sigmoid dynamic weights) |
-| Portfolio | BTC/BNB 20-day momentum ranking → 70/30 rotation |
-| Trading cost | 0.07% per side included in backtest |
+| 指标 | 稳定安分组合 | 持有 BTC | 持有 BNB |
+| :--- | ---: | ---: | ---: |
+| 累计收益 | **+14.98%** | +19.64% | +20.59% |
+| 最大回撤 | **-6.97%** | -29.25% | -26.67% |
+| 夏普比率 | **1.81** | 1.13 | 1.14 |
 
-**Core idea**: don't predict direction — answer "should I be in the market right now?" When the ML safety score is low, stay flat unconditionally; only when it passes the gate do DVOL-turn signals become tradeable. The two guns' equity curves are blended by trend state, and momentum rotation puts weight on the stronger coin.
+这一样本区间内，组合最大回撤约为直接持币的四分之一。
 
----
+![稳定安分组合与 BTC、BNB 持币对比](./docs/backtest_2026_sample.png)
 
-## Backtest Results (2026-03-01 → 2026-09-19)
+回测按单边 0.07% 计入交易费用，未计资金费、额外滑点与组合再平衡成本。历史表现不代表未来收益。[查看完整口径](./docs/strategy.md)
 
-![2026 backtest: rotation vs buy & hold](./docs/backtest_2026_sample.png)
+## 快速开始
 
-| Metric | Dual-Core Rotation 70/30 | BTC Solo | BNB Solo | BTC Hold | BNB Hold |
-|--------|:---:|:---:|:---:|:---:|:---:|
-| Total return | **+15.06%** | +2.24% | +26.52% | +19.64% | +20.59% |
-| CAGR | +29.03% | +4.11% | +53.33% | +38.52% | +40.53% |
-| Max drawdown | **-6.96%** | -3.95% | -9.64% | -29.25% | -26.67% |
-| Sharpe | **1.79** | 0.72 | 2.13 | 1.13 | 1.14 |
-| Trades | 69 | 20 | 49 | — | — |
-| Win rate | 44.9% | 45.0% | 44.9% | — | — |
-
-> In this 6-month window buy & hold earned more in absolute terms, but with ~30% drawdowns. The rotation delivered clearly better risk-adjusted returns (Sharpe 1.79 vs 1.13) with **4x smaller drawdown**. That is exactly this strategy's positioning: it optimizes the drawdown floor, not the return ceiling.
-
----
-
-## Repository Layout
-
-```
-📁 stable-anfen-strategy/
-├── 📄 stable_anfen_strategy.py   # core strategy (ML training, dual-gun, rotation)
-├── 📄 backtest.py                # backtest entry point (equity chart + stats)
-├── 📄 fetch_data.py              # data fetcher (Binance klines + Deribit DVOL)
-├── 📄 pyproject.toml             # Python package metadata
-├── 📁 tests/                     # pytest suite (features, trading loop, rotation)
-├── 📁 .github/                   # CI workflow, issue/PR templates
-├── 📁 data/                      # sample data (2021-01 → 2026-09, 4h)
-│   ├── btcusdt_4h.csv
-│   ├── bnbusdt_4h.csv
-│   ├── deribit_dvol_btc_4h.csv
-│   ├── btc_80D_wfa.csv           # 80-day walk-forward dynamic threshold
-│   └── bnb_80D_wfa.csv
-├── 📄 SECURITY.md / CONTRIBUTING.md / CODE_OF_CONDUCT.md / CHANGELOG.md
-└── 📁 docs/
-    └── backtest_2026_sample.png  # sample backtest chart
-```
-
----
-
-## Installation
-
-Requires Python 3.10+.
+需要 Python 3.10+。仓库已附行情、DVOL 与阈值数据，无需 API Key 即可运行。
 
 ```bash
 git clone https://github.com/tytaiii/stable-anfen-strategy.git
 cd stable-anfen-strategy
 pip install -r requirements.txt
+
+# 复现上述样本区间，并与持币比较
+python backtest.py --start 2026-03-01 --end 2026-09-18T16:00 --vs-hold
 ```
 
-No API keys are required: `data/` ships with a bundled snapshot through
-2026-09, and `fetch_data.py` uses only public endpoints.
-
-## Usage
+运行后输出净值图、收益、最大回撤、夏普比率等统计。修改 `--start` 与 `--end` 可查看其他区间。
 
 ```bash
-# (Optional) refresh data — skip if the bundled data/ snapshot is enough
+# 可选：更新行情与 DVOL；不更新预计算的 WFA 阈值
 python fetch_data.py
-
-# Run the backtest (default window 2026-03-01 → today; outputs chart + stats)
-python backtest.py
-
-# Custom window
-python backtest.py --start 2025-01-01 --end 2025-12-31
-
-# Compare against buy & hold
-python backtest.py --start 2026-03-01 --vs-hold
 ```
 
-The backtest writes a PNG chart and prints per-series stats (return, CAGR,
-max drawdown, Sharpe, trade count, win rate).
+## 代码与文档
 
-## Testing
+| 文件 | 用途 |
+| :--- | :--- |
+| [stable_anfen_strategy.py](./stable_anfen_strategy.py) | 评分、择时、趋势跟随与轮动逻辑 |
+| [backtest.py](./backtest.py) | 回测、统计与绘图 |
+| [fetch_data.py](./fetch_data.py) | 更新 Binance 行情与 Deribit DVOL |
+| [策略说明](./docs/strategy.md) | 参数、数据口径与回测边界 |
+| [贡献指南](./CONTRIBUTING.md) | 开发环境与测试方法 |
 
-```bash
-pip install pytest
-pytest -v
-```
-
-The suite covers feature engineering, the trading loop, the scout gun, the
-momentum rotation engine, and statistics — all on small synthetic datasets,
-so the full run takes about a second. CI runs it on every push and pull
-request (Python 3.11 and 3.12).
-
----
-
-## Strategy Details
-
-### 1. Data & Features
-
-- **Price**: Binance public klines, 4h, BTCUSDT / BNBUSDT
-- **Volatility**: Deribit DVOL index (BTC implied volatility), 4h
-- **Features**:
-  - `z` = 60-bar rolling Z-score of DVOL (≈10 days)
-  - `dz` = first difference of `z`
-  - `trigger` = upward crossing of `dz` through zero (volatility bottoming out)
-  - `vol` = ATR14 / close (vol filter; disabled in the Stable-Anfen edition)
-
-### 2. ML Safety Score (core gate)
-
-A Logistic Regression is trained per horizon out of 6 (1/3/5/7/14/30 days) to predict "will price rise over the next H bars", yielding probability `p_H`; **safety score = median of the 6 probabilities**.
-
-Training uses an **Expanding Window**: retrained every 42 bars (7 days) since 2022-06, with sample weights governed by two rules:
-
-- **Time decay**: exponential decay with an 18-month (540-day) half-life — recent samples weigh more
-- **Critical event anchoring**: samples whose absolute forward return ranks in the top 5% percentile get weight reset to 1.0 (big moves must not be forgotten by time decay)
-
-**Gating rule**: `safety score < dynamic threshold → flat / close unconditionally`. The dynamic threshold comes from an 80-day walk-forward analysis (WFA) optimization stored in `{coin}_80D_wfa.csv`, falling back to a static 0.52 when missing.
-
-### 3. Main Gun (DVOL-turn gun)
-
-- Entry: gate open + `trigger` turn + current return r > 0, and the short-horizon score (mean of p_6/p_18/p_30) ≥ T_short (BTC 0.54 / BNB 0.50)
-- Exit: gate closes, or `trigger` with r < 0
-- Queue mechanism: when the trigger fires but the short-horizon score is insufficient, the signal enters a 12-bar (48h) waiting queue; entry happens if the score recovers within the window
-
-### 4. Scout Gun (trend breakout gun)
-
-- Entry: 20-bar momentum > 0 and close breaks the 20-bar high (HH20)
-- Exit: close breaks the 10-bar low
-- Also constant 1x — no leverage components at all
-
-### 5. Dual-Gun Blending
-
-Scout weight `w = 0.40 / (1 + e^(-0.3 · Z_MA200))`, where Z_MA200 is the close's percentage deviation from the 200-day moving average: **in strong trends the scout gun's weight rises automatically (max 40%); in chop the main gun dominates**. The two guns' equity curves are merged by these weights.
-
-### 6. Momentum Rotation (70/30)
-
-After BTC and BNB each complete their dual-gun runs, weights are assigned by **120-bar (20-day) momentum ranking**: rank 1 gets 70%, rank 2 gets 30%. Rotation is performed at the equity level, adding no rebalancing friction.
-
----
-
-## Data Sources & Updates
-
-| Data | Source | Notes |
-|------|--------|-------|
-| 4h klines | Binance public API (`/api/v3/klines`) | free, no key needed |
-| DVOL | Deribit public API (`get_volatility_index_data`) | free, no key needed |
-
-**⚠️ Update caveat**: Deribit keeps fine-grained (hourly) DVOL history for only ~42 days; earlier history is only available at 12h granularity. `fetch_data.py` handles this automatically — recent periods use fine data, older periods use 12h data forward-filled to 4h (matching the original live pipeline). As a result **DVOL for older periods is a step-wise approximation** and triggers there are slightly duller than reality.
-
----
-
-## Known Limitations (honest backtest statement)
-
-1. **DVOL approximation**: older history uses 12h granularity forward-filled, not true 4h values (see above).
-2. **Funding fees excluded**: perpetual funding (~-0.01%/8h magnitude) is not modeled.
-3. **No slippage model**: only 0.07%/side fees; larger capital will slip more in live trading.
-4. **No look-ahead bias**: all signals are generated at bar t close and filled at t+1 open; ML training only uses data before t.
-5. **Single market**: validated on BTC/BNB only; other assets untested.
-
----
-
-## License
-
-[MIT License](./LICENSE) — free to use, modify and commercialize; keep the copyright notice.
+[MIT License](./LICENSE)。本项目用于量化研究，不构成投资建议。

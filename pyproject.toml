@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "stable-anfen-strategy"
 version = "0.1.0"
-description = "Conservative crypto quant strategy: BTC+BNB dual-gun 1x no-leverage momentum rotation with ML safety-score gating"
+description = "Unleveraged BTC/BNB strategy focused on drawdown control, combining ML timing, trend following, and 70/30 rotation."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Letian Xie" }]

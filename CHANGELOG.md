@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Rewrote the README in concise Chinese, highlighting the strategy's purpose,
+  sample drawdown comparison, and a reproducible quick start.
+- Moved implementation details and backtest assumptions to `docs/strategy.md`,
+  clarifying strategy-equity rotation, the independent trend module, and data coverage.
+- Simplified the package description to match the project's positioning.
+- Refreshed sample metrics and the chart using the bundled data, and aligned
+  the displayed end date with the final available timestamp.
+
 ## [0.1.0] - 2026-09-19
 
 ### Added
